@@ -7,6 +7,7 @@ class ProcessedQuery:
         # map query term to number of occurrences
         self.term_counts = term_counts if term_counts else {}
 
+
 def process_query(str_query, tokenizer):
     terms = []
     term_counts = {}

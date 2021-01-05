@@ -1,7 +1,7 @@
-from index import Index
+from searchengine import SearchEngine
 
 if __name__ == '__main__':
-    index = Index('index.json')
+    index = SearchEngine('index.json')
     index.index_file(r'C:\Users\Stefan\Github\Blog-Webcode\sample_post\post.md', 'sample-post')
     index.index_file(r'C:\Users\Stefan\Github\Blog-Webcode\sample_post\post.md', 'sample-post-2')
     index.index_file(r'C:\Users\Stefan\Github\Blog-Content\project-overview-c++-game\post.md', 'project-overview-c++-game')

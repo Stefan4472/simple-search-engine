@@ -1,16 +1,16 @@
 import json
-import math
 from queue import PriorityQueue
 from collections import namedtuple
 from inverted_list import InvertedList, inverted_list_from_json
 import query as q
 import tokenizer as t
+from scoring import score_bm25, score_ql
 
 Result = namedtuple('result', 'doc_id score')
 
-# Serialization currently done in JSON... This will be small enough that it should be fine (despite not being highly performant)
 
-class Index:  # TODO: RENAME SEARCHENGINE?
+# Serialization currently done in JSON... This will be small enough that it should be fine (despite not being highly performant)
+class SearchEngine:
     def __init__(self, filepath, index=None, doc_data=None):
         self.filepath = filepath
         self.index = index if index else {}
@@ -152,30 +152,6 @@ def connect(filepath):
     # File not found: create a new file and populate with empty index and doc_data
     except FileNotFoundError:
         open(filepath, 'a').close()
-        Index(filepath).commit()
+        SearchEngine(filepath).commit()
     
-    return Index(filepath, index=index, doc_data=doc_data)
-
-# scores a single document for a single query term
-# qf: frequency of the term in the query
-# f: frequency of the term in the doc
-# n: number of docs that contain the term
-# N: number of docs in the collection
-# dl: number of terms in the document
-# avdl: average number of terms in a document
-# k1, k2, b: parameters for the formula
-def score_bm25(qf, f, n, N, dl, avdl, k1=1.2, k2=100, b=0.75):  # TODO: MOVE TO A DIFFERENT PLACE
-    K = k1 * ((1 - b) + b * dl / avdl)
-    return math.log10(1 / ((n + 0.5) / (N - n + 0.5))) * \
-           (((k1 + 1) * f) / (K + f)) * \
-           (((k2 + 1) * qf) / (k2 + qf))
-
-# scores a single document for a single query term
-# fqd: number of occurrences in the document
-# dl: number of terms in the doc
-# cq: number of times the term appears in the corpus
-# C: total number of term occurrences in the corpus
-def score_ql(fqd, dl, cq, C, mu=1500):
-    ql_calc = (fqd + mu * (cq / C)) / (dl + mu)
-    # TODO: GUARD AGAINST CQ = 0, C = 0, DL = 0, FQD = 0
-    return 0.0 if ql_calc == 0 else math.log10(ql_calc)
+    return SearchEngine(filepath, index=index, doc_data=doc_data)
