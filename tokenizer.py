@@ -1,5 +1,7 @@
-import re
+import typing
 import stemmer
+import pathlib
+
 
 '''
 Used to split text from a file into tokens that can be indexed. Initialize
@@ -13,16 +15,16 @@ function, which allows the whole process to be done lazily.
 So, the whole process performs tokenization->stopword filtering->Porter stemming.
 '''
 class Tokenizer:
-    def __init__(self, stopword_filepath=None):
+    def __init__(self, stopword_filepath: typing.Optional[pathlib.Path] = None):
         self.stopword_filepath = stopword_filepath
         # set of stopwords
         self.stopwords = _generate_stopword_set(stopword_filepath)
 
     # lazily tokenize the given filepath using current stopword set
-    def tokenize_file(self, filepath):
+    def tokenize_file(self, filepath: pathlib.Path, encoding: str = 'utf8'):
         file_text = ''
         # Read file
-        with open(filepath, encoding='utf8') as text_file:
+        with open(filepath, encoding=encoding) as text_file:
             file_text = text_file.read()
         # Iterate through tokens in file
         for token in self._get_next_unprocessed_token(file_text):
@@ -81,11 +83,13 @@ class Tokenizer:
             if in_token and curr_token:
                 yield curr_token
 
+
 # return whether a char meets the rules for being in a token
 def _is_tokenizable(char):
     return (char >= 'a' and char <= 'z') or \
         (char >= 'A' and char <= 'Z') or \
         (char >= '0' and char <= '9')
+
 
 # looks for pattern ([tokenizable char][period]){2,} in the string *starting
 # at the given index*
@@ -103,10 +107,11 @@ def _has_abbreviation(string, index):
             break
     return (True, string[index:i]) if num_letters >= 2 else (False, '')
 
+
 # takes the path to a stopword file (one stopword per line) and
 # reads the words into a set
 # returns the created set of stopwords, which may be empty
-def _generate_stopword_set(filepath):
+def _generate_stopword_set(filepath: typing.Optional[pathlib.Path]):
     stop_set = set()
     if filepath is not None:
         for line in open(filepath, 'r'):
