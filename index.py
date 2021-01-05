@@ -2,10 +2,9 @@ import json
 import math
 from queue import PriorityQueue
 from collections import namedtuple
-from flaskr.search_engine.inverted_list import InvertedList, inverted_list_from_json
-import flaskr.search_engine.result as r
-import flaskr.search_engine.query as q
-import flaskr.search_engine.tokenizer as t
+from inverted_list import InvertedList, inverted_list_from_json
+import query as q
+import tokenizer as t
 
 Result = namedtuple('result', 'doc_id score')
 

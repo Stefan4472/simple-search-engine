@@ -1,5 +1,5 @@
 import re
-import flaskr.search_engine.stemmer as stemmer
+import stemmer
 
 '''
 Used to split text from a file into tokens that can be indexed. Initialize
