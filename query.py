@@ -1,21 +1,22 @@
+import dataclasses as dc
+from tokenizer import Tokenizer
+
+
+@dc.dataclass
 class ProcessedQuery:
-    def __init__(self, query='', terms=None, term_counts=None):
-        # the string query
-        self.str_query = query if query else ''
-        # list of in-order terms in the query, no repeats
-        self.terms = terms if terms else []
-        # map query term to number of occurrences
-        self.term_counts = term_counts if term_counts else {}
+    query: str
+    terms: list[str]
+    term_counts: dict[str, int]
 
 
-def process_query(str_query, tokenizer):
-    terms = []
+def process_query(
+        query: str,
+        tokenizer: Tokenizer,
+) -> ProcessedQuery:
     term_counts = {}
-    for word in tokenizer.tokenize_string(str_query):
-        if word not in terms:
-            terms.append(word)
+    for word in tokenizer.tokenize_string(query):
         if word in term_counts:
             term_counts[word] += 1
         else:
             term_counts[word] = 1
-    return ProcessedQuery(str_query, terms, term_counts)
+    return ProcessedQuery(query, list(term_counts.keys()), term_counts)

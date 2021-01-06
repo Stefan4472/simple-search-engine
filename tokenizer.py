@@ -3,18 +3,18 @@ import stemmer
 import pathlib
 
 
-'''
-Used to split text from a file into tokens that can be indexed. Initialize
-with the path to a stopword file, if word stopping is desired (the stopword
-file should have one stopword per line). Then call the tokenize() generator
-function, which returns tokens one at a time, in order. This allows
-constructions such as "for token in ___.tokenize()".
-The tokenize() function relies on a helper function, _get_next_unprocessed_token,
-to feed in the next parsed token from the file. This is also a generator
-function, which allows the whole process to be done lazily.
-So, the whole process performs tokenization->stopword filtering->Porter stemming.
-'''
 class Tokenizer:
+    """
+    Used to split text from a file into tokens that can be indexed. Initialize
+    with the path to a stopword file, if word stopping is desired (the stopword
+    file should have one stopword per line). Then call the tokenize() generator
+    function, which returns tokens one at a time, in order. This allows
+    constructions such as "for token in ___.tokenize()".
+    The tokenize() function relies on a helper function, _get_next_unprocessed_token,
+    to feed in the next parsed token from the file. This is also a generator
+    function, which allows the whole process to be done lazily.
+    So, the whole process performs tokenization->stopword filtering->Porter stemming.
+    """
     def __init__(self, stopword_filepath: typing.Optional[pathlib.Path] = None):
         self.stopword_filepath = stopword_filepath
         # set of stopwords

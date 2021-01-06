@@ -1,14 +1,14 @@
 import json
 import pathlib
-import typing
 import dataclasses as dc
 from queue import PriorityQueue
-from inverted_list import InvertedList, inverted_list_from_json
+from inverted_list import InvertedList
 import query as q
 import tokenizer as t
 from scoring import score_bm25, score_ql
 # TODO: PROVIDE INDEX_HTML_FILE(), WHICH STRIPS TAGS OUT?
-
+# TODO: CUSTOM "DOCID" TYPE (SIMPLY AN INT)
+# TODO: DISTINGUISH BETWEEN DOCID (USER PROVIDED) AND DOCNUM (SEQUENTIALLY GENERATED)
 
 @dc.dataclass
 class IntermediateResult:
@@ -38,7 +38,7 @@ class SearchEngine:
             self,
             filepath: pathlib.Path,
             encoding: str = 'utf8',
-            stopwords_file: typing.Optional[pathlib.Path] = None,
+            stopwords_file: pathlib.Path = None,
     ):
         self.filepath = filepath
         self._index, self._doc_data = SearchEngine._connect(filepath, encoding)
@@ -50,7 +50,7 @@ class SearchEngine:
     def _connect(
             filepath: pathlib.Path,
             encoding: str,
-    ) -> typing.Tuple[dict[str, InvertedList], dict[int, DocInfo]]:
+    ) -> (dict[str, InvertedList], dict[int, DocInfo]):
         """Attempts to marshall data stored in `filepath`.
 
         Returns dict mapping token to InvertedList, and dict mapping
@@ -70,7 +70,7 @@ class SearchEngine:
             # Deserialize each one and add it to the index dict under its term.
             index = {}
             for serialized_inv_list in json_data['index']:
-                inv_list = inverted_list_from_json(serialized_inv_list)
+                inv_list = InvertedList.from_json(serialized_inv_list)
                 index[inv_list.term] = inv_list
             return index, doc_data
         # File not found: return empty index and doc_data
@@ -150,7 +150,7 @@ class SearchEngine:
             for term, inv_list in inv_lists.items():
                 if score_func == 'bm25':
                     qf = processed_query.term_counts[term]
-                    f = inv_list.get_term_freq() if inv_list.curr_doc_id() == doc_id else 0
+                    f = inv_list.get_term_freq() if inv_list.get_curr_doc_id() == doc_id else 0
                     n = inv_list._num_docs
                     N = self._num_docs
                     dl = self._doc_data[doc_id].num_terms
@@ -158,7 +158,7 @@ class SearchEngine:
                     # print (qf, f, n, N, dl, avdl)
                     score += score_bm25(qf, f, n, N, dl, avdl)
                 elif score_func == 'ql':
-                    fqd = inv_list.get_term_freq() if inv_list.curr_doc_id() == doc_id else 0
+                    fqd = inv_list.get_term_freq() if inv_list.get_curr_doc_id() == doc_id else 0
                     dl = self._doc_data[doc_id].num_terms
                     cq = inv_list.num_postings
                     C = self._num_terms
@@ -181,10 +181,10 @@ class SearchEngine:
             self,
             inv_lists,
     ) -> (bool, int):
-        in_progress = [list for list in inv_lists.values() if not list.finished()]
+        in_progress = [list for list in inv_lists.values() if not list.is_finished()]
         if not in_progress:
             return False, -1
-        next_doc_id = min([list.curr_doc_id() for list in in_progress])
+        next_doc_id = min([list.get_curr_doc_id() for list in in_progress])
         return True, next_doc_id
 
     # returns list of (slug, score), ordered decreasing
