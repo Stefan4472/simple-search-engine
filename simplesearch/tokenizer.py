@@ -1,6 +1,6 @@
 import typing
-import stemmer
 import pathlib
+import simplesearch.stemmer as stemmer
 
 
 class Tokenizer:

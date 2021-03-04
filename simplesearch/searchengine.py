@@ -2,13 +2,14 @@ import json
 import pathlib
 import dataclasses as dc
 from queue import PriorityQueue
-from inverted_list import InvertedList
-import query as q
-import tokenizer as t
-from scoring import score_bm25, score_ql
+from simplesearch.inverted_list import InvertedList
+import simplesearch.query as q
+import simplesearch.tokenizer as t
+from simplesearch.scoring import score_bm25, score_ql
 # TODO: PROVIDE INDEX_HTML_FILE(), WHICH STRIPS TAGS OUT?
 # TODO: CUSTOM "DOCID" TYPE (SIMPLY AN INT)
 # TODO: DISTINGUISH BETWEEN DOCID (USER PROVIDED) AND DOCNUM (SEQUENTIALLY GENERATED)
+
 
 @dc.dataclass
 class IntermediateResult:

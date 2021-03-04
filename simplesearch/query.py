@@ -1,5 +1,5 @@
 import dataclasses as dc
-from tokenizer import Tokenizer
+from simplesearch.tokenizer import Tokenizer
 
 
 @dc.dataclass

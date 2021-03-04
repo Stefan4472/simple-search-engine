@@ -1,4 +1,3 @@
-import typing
 """
 Implementation of Porter Stemming, Step 1.
 get_porter_stem(word) is the main, public-facing function. It delegates the

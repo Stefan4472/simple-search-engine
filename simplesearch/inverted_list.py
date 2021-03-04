@@ -1,4 +1,4 @@
-from posting_list import PostingList
+from simplesearch.posting_list import PostingList
 
 
 class InvertedList:
