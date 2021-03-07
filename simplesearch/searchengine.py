@@ -41,6 +41,8 @@ class SearchEngine:
             encoding: str = 'utf8',
             stopwords_file: pathlib.Path = None,
     ):
+        if isinstance(filepath, str):
+            filepath = pathlib.Path(filepath)
         self.filepath = filepath
         self._index, self._doc_data = SearchEngine._connect(filepath, encoding)
         self._num_docs = len(self._doc_data)

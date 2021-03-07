@@ -131,8 +131,8 @@ def _p1b_ed_edly_ing_ingly(term: str) -> (int, str):
         if test_word.endswith('at') or test_word.endswith('bl') or \
                 test_word.endswith('iz'):
             return suffix_len, test_word + 'e'
-        elif test_word[-1] == test_word[-2] and test_word[-1] != 'l' and \
-                test_word[-1] != 's' and test_word[-1] != 'z':
+        elif len(test_word) >= 2 and test_word[-1] == test_word[-2] and \
+                test_word[-1] != 'l' and test_word[-1] != 's' and test_word[-1] != 'z':
             return suffix_len, test_word[:-1]
         elif len(test_word) < 4:
             return suffix_len, test_word + 'e'

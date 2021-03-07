@@ -11,7 +11,7 @@ class InvertedList:
         self.term = term
         # list of PostingLists RENAME TO SOMETHING ELSE
         self.posting_lists = posting_lists if posting_lists else []
-        print(posting_lists, self.posting_lists)
+        # print(posting_lists, self.posting_lists)
         # TODO: REDUNDANCY
         self.num_docs = len(self.posting_lists)
         self.num_postings = sum([len(posting_list.postings) for posting_list in self.posting_lists])
