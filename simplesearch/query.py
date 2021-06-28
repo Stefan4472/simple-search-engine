@@ -1,12 +1,13 @@
 import dataclasses as dc
+import typing
 from simplesearch.tokenizer import Tokenizer
 
 
 @dc.dataclass
 class ProcessedQuery:
     query: str
-    terms: list[str]
-    term_counts: dict[str, int]
+    terms: typing.List[str]
+    term_counts: typing.Dict[str, int]
 
 
 def process_query(

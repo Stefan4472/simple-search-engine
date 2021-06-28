@@ -1,3 +1,4 @@
+import typing
 from simplesearch.posting_list import PostingList
 
 
@@ -5,7 +6,7 @@ class InvertedList:
     def __init__(
             self,
             term: str,
-            posting_lists: list[PostingList] = None,
+            posting_lists: typing.List[PostingList] = None,
     ):
         # NOTE: ONLY ITERATES FORWARD (for now). Call `reset()` between usages.
         self.term = term

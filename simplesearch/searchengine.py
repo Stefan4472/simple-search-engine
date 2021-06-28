@@ -2,6 +2,7 @@ import json
 import pathlib
 import dataclasses as dc
 from queue import PriorityQueue
+import typing
 from simplesearch.inverted_list import InvertedList
 import simplesearch.query as q
 import simplesearch.tokenizer as t
@@ -53,7 +54,7 @@ class SearchEngine:
     def _connect(
             filepath: pathlib.Path,
             encoding: str,
-    ) -> (dict[str, InvertedList], dict[int, DocInfo]):
+    ) -> (typing.Dict[str, InvertedList], typing.Dict[int, DocInfo]):
         """Attempts to marshall data stored in `filepath`.
 
         Returns dict mapping token to InvertedList, and dict mapping
@@ -121,7 +122,7 @@ class SearchEngine:
             self,
             query: str,
             score_func: str = 'ql',
-    ) -> list[FinalResult]:
+    ) -> typing.List[FinalResult]:
         # TODO: MAKE SCORE_FUNC AN ENUM
         # Process the query so it can be understood
         processed_query = q.process_query(query, self._tokenizer)
@@ -132,7 +133,7 @@ class SearchEngine:
             self,
             processed_query: q.ProcessedQuery,
             score_func: str,
-    ) -> PriorityQueue[IntermediateResult]:
+    ) -> 'PriorityQueue[IntermediateResult]':
         results: PriorityQueue[IntermediateResult] = PriorityQueue()
         # Retrieve the InvertedLists in the same order as the query terms
         inv_lists = {
@@ -193,7 +194,7 @@ class SearchEngine:
     # returns list of (slug, score), ordered decreasing
     def _format_results(
             self,
-            results: PriorityQueue[IntermediateResult],
+            results: 'PriorityQueue[IntermediateResult]',
     ):
         formatted_results = []
         while not results.empty():

@@ -1,3 +1,6 @@
+import typing
+
+
 class PostingList:
     """Stores the positions of "postings" of some term for a specific doc_id.
 
@@ -8,7 +11,7 @@ class PostingList:
     def __init__(
             self,
             doc_id: int,
-            postings: list[int] = None,
+            postings: typing.List[int] = None,
     ):
         self.doc_id = doc_id
         self.postings = postings if postings else []
