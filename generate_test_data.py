@@ -15,7 +15,7 @@ import dataclasses as dc
 
 @dc.dataclass
 class Sonnet:
-    title: str
+    number: int
     text: str
 
 
@@ -52,15 +52,14 @@ def cli(
     for i in range(len(title_matches) - 1):
         title_match = title_matches[i]
         next_title_match = title_matches[i+1]
-        sonnet_number = title_match.group()
-        sonnet_title = 'SONNET-{}'.format(sonnet_number)
+        sonnet_number = int(title_match.group())
         sonnet_text = sonnets_text[title_match.end():next_title_match.start()].strip()
-        sonnets.append(Sonnet(sonnet_title, sonnet_text))
+        sonnets.append(Sonnet(sonnet_number, sonnet_text))
     # Get the final sonnet
     title_match = title_matches[-1]
-    sonnet_title = 'SONNET-' + title_match.group()
+    sonnet_number = int(title_match.group())
     sonnet_text = sonnets_text[title_match.end():].strip()
-    sonnets.append(Sonnet(sonnet_title, sonnet_text))
+    sonnets.append(Sonnet(sonnet_number, sonnet_text))
 
     # Clear existing save data
     if save_path.exists():
@@ -70,7 +69,7 @@ def cli(
     sonnets_path = save_path / 'Sonnets'
     sonnets_path.mkdir()
     for sonnet in sonnets:
-        with open(sonnets_path / (sonnet.title + '.txt'), 'w+', encoding='utf8') as out:
+        with open(sonnets_path / (str(sonnet.number) + '.txt'), 'w+', encoding='utf8') as out:
             out.write(sonnet.text)
 
 
