@@ -1,41 +1,39 @@
 import json
 import pathlib
-import dataclasses as dc
-from queue import PriorityQueue
 import typing
+from queue import PriorityQueue
 from simplesearch.inverted_list import InvertedList
 import simplesearch.query as q
 import simplesearch.tokenizer as t
 from simplesearch.scoring import score_bm25, score_ql
-# TODO: PROVIDE INDEX_HTML_FILE(), WHICH STRIPS TAGS OUT?
-# TODO: CUSTOM "DOCID" TYPE (SIMPLY AN INT)
+from simplesearch.helper import DocInfo, IntermediateResult, FinalResult
 # TODO: DISTINGUISH BETWEEN DOCID (USER PROVIDED) AND DOCNUM (SEQUENTIALLY GENERATED)
 
 
-@dc.dataclass
-class IntermediateResult:
-    """Stores the score that a specified `doc_id` received."""
-    doc_id: int
-    score: float
-
-    def __lt__(self, other):
-        return self.score < other.score
-
-
-@dc.dataclass
-class FinalResult:
-    slug: str
-    score: float
-
-
-@dc.dataclass
-class DocInfo:
-    """Information stored for an indexed document."""
-    slug: str
-    num_terms: int
-
-
 class SearchEngine:
+    """SearchEngine implementation."""
+    _filepath: pathlib.Path
+    _encoding: str
+    _stopwords: typing.List[str]
+    _index: typing.Dict[str, InvertedList]
+    _doc_data: typing.Dict[int, DocInfo]
+    _num_docs: int
+    _num_terms: int
+    _tokenizer: t.Tokenizer
+
+    @property
+    def filepath(self) -> pathlib.Path:
+        return self._filepath
+
+    @property
+    def num_docs(self) -> int:
+        return self.num_docs
+
+    @property
+    def num_terms(self) -> int:
+        return self._num_terms
+
+    # TODO: SHOULD ENCODING BE A `SEARCH_ENGINE` OPTION, OR AN `INDEX_FILE` ARG?
     def __init__(
             self,
             filepath: pathlib.Path,
@@ -44,7 +42,7 @@ class SearchEngine:
     ):
         if isinstance(filepath, str):
             filepath = pathlib.Path(filepath)
-        self.filepath = filepath
+        self._filepath = filepath
         self._index, self._doc_data = SearchEngine._connect(filepath, encoding)
         self._num_docs = len(self._doc_data)
         self._num_terms = sum(inv_list.num_postings for inv_list in self._index.values())
@@ -55,7 +53,8 @@ class SearchEngine:
             filepath: pathlib.Path,
             encoding: str,
     ) -> (typing.Dict[str, InvertedList], typing.Dict[int, DocInfo]):
-        """Attempts to marshall data stored in `filepath`.
+        """
+        Marshals data stored in `filepath`.
 
         Returns dict mapping token to InvertedList, and dict mapping
         doc_id to corresponding DocInfo.
@@ -86,7 +85,8 @@ class SearchEngine:
             filepath: pathlib.Path,
             file_id: str,
     ):
-        """Indexes the file at the specified path, and registers it in the
+        """
+        Indexes the file at the specified path, and registers it in the
         index under the provided `file_id`.
 
         NOTE: No changes will be made to the persistent data until `commit()`
@@ -110,7 +110,6 @@ class SearchEngine:
 
     def commit(self):
         """Serializes data and writes out to `self.filepath`"""
-        # FUNNY: INDEX SIZE WENT FROM 132KB TO 51KB WHEN I WENT FROM INDENT=2 TO NO INDENT
         # Create empty file if it doesn't exist already
         if not self.filepath.exists():
             open(self.filepath, 'a').close()
