@@ -1,4 +1,11 @@
 import math
+import dataclasses as dc
+
+
+# @dc.dataclass
+# class ScoreInfo:
+#     """Data provided by the SearchEngine that is used for scoring."""
+
 
 
 def score_bm25(qf, f, n, N, dl, avdl, k1=1.2, k2=100, b=0.75) -> float:

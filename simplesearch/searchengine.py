@@ -38,7 +38,7 @@ class SearchEngine:
             self,
             filepath: pathlib.Path,
             encoding: str = 'utf8',
-            stopwords_file: pathlib.Path = None,
+            stopwords: typing.List[str] = None,
     ):
         if isinstance(filepath, str):
             filepath = pathlib.Path(filepath)
@@ -46,7 +46,7 @@ class SearchEngine:
         self._index, self._doc_data = SearchEngine._connect(filepath, encoding)
         self._num_docs = len(self._doc_data)
         self._num_terms = sum(inv_list.num_postings for inv_list in self._index.values())
-        self._tokenizer = t.Tokenizer(stopword_filepath=stopwords_file)
+        self._tokenizer = t.Tokenizer(stopwords=stopwords)
 
     @staticmethod
     def _connect(
