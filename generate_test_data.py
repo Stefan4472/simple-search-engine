@@ -61,7 +61,6 @@ def cli(
     sonnet_title = 'SONNET-' + title_match.group()
     sonnet_text = sonnets_text[title_match.end():].strip()
     sonnets.append(Sonnet(sonnet_title, sonnet_text))
-    print(sonnets)
 
     # Clear existing save data
     if save_path.exists():
@@ -71,7 +70,7 @@ def cli(
     sonnets_path = save_path / 'Sonnets'
     sonnets_path.mkdir()
     for sonnet in sonnets:
-        with open(sonnets_path / sonnet.title, 'w+') as out:
+        with open(sonnets_path / (sonnet.title + '.txt'), 'w+', encoding='utf8') as out:
             out.write(sonnet.text)
 
 
