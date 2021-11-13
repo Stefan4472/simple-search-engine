@@ -26,7 +26,7 @@ class Tokenizer:
     def tokenize_file(
             self,
             filepath: pathlib.Path,
-            encoding: str = 'utf8',
+            encoding: str = None,
     ) -> typing.Generator[str, None, None]:
         """Return a generator that yields tokens from `filepath`."""
         with open(filepath, encoding=encoding) as f:

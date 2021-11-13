@@ -11,9 +11,12 @@ from simplesearch.helper import DocInfo, IntermediateResult, FinalResult
 
 
 class SearchEngine:
-    """SearchEngine implementation."""
+    """
+    SearchEngine implementation.
+
+    Note: You must call `commit()` to persist changes!
+    """
     _filepath: pathlib.Path
-    _encoding: str
     _stopwords: typing.List[str]
     _index: typing.Dict[str, InvertedList]
     _doc_data: typing.Dict[int, DocInfo]
@@ -33,89 +36,97 @@ class SearchEngine:
     def num_terms(self) -> int:
         return self._num_terms
 
-    # TODO: SHOULD ENCODING BE A `SEARCH_ENGINE` OPTION, OR AN `INDEX_FILE` ARG?
     def __init__(
             self,
             filepath: pathlib.Path,
-            encoding: str = 'utf8',
             stopwords: typing.List[str] = None,
     ):
         if isinstance(filepath, str):
             filepath = pathlib.Path(filepath)
+        if filepath.suffix != '.json':
+            raise ValueError('The provided filepath must be of type ".json"')
         self._filepath = filepath
-        self._index, self._doc_data = SearchEngine._connect(filepath, encoding)
+        self._index = self._marshall_index()
+        self._doc_data = self._marshall_doc_data()
         self._num_docs = len(self._doc_data)
         self._num_terms = sum(inv_list.num_postings for inv_list in self._index.values())
         self._tokenizer = t.Tokenizer(stopwords=stopwords)
 
-    @staticmethod
-    def _connect(
-            filepath: pathlib.Path,
-            encoding: str,
-    ) -> (typing.Dict[str, InvertedList], typing.Dict[int, DocInfo]):
-        """
-        Marshals data stored in `filepath`.
-
-        Returns dict mapping token to InvertedList, and dict mapping
-        doc_id to corresponding DocInfo.
-        """
-        if filepath.suffix != '.json':
-            raise ValueError('The provided file must be of type ".json"')
-        # Read the provided file and deserialize the index
+    def _marshall_index(self) -> typing.Dict[str, InvertedList]:
+        """Marshals inverted index from `filepath`."""
         try:
-            with open(filepath, encoding=encoding) as json_file:
-                json_data = json.load(json_file)
-            # Read in doc_data, and make sure to convert the doc_id keys to 'int'
-            doc_data = {}
-            for doc_id, doc_info in json_data['doc_data'].items():
-                doc_data[int(doc_id)] = DocInfo(doc_info['slug'], doc_info['num_terms'])
+            with open(self._filepath, encoding='utf8') as f:
+                json_data = json.load(f)
             # Iterate through the list of serialized InvertedLists.
             # Deserialize each one and add it to the index dict under its term.
             index = {}
             for serialized_inv_list in json_data['index']:
                 inv_list = InvertedList.from_json(serialized_inv_list)
                 index[inv_list.term] = inv_list
-            return index, doc_data
-        # File not found: return empty index and doc_data
+            return index
         except FileNotFoundError:
-            return {}, {}
+            # File not found: return empty
+            return {}
+
+    def _marshall_doc_data(self) -> typing.Dict[int, DocInfo]:
+        """Marshals doc_data from `filepath`."""
+        try:
+            with open(self._filepath, encoding='utf8') as f:
+                json_data = json.load(f)
+            # Read in doc_data, and make sure to convert the doc_id keys to 'int'
+            doc_data = {}
+            for doc_id, doc_info in json_data['doc_data'].items():
+                doc_data[int(doc_id)] = DocInfo(doc_info['slug'], doc_info['num_terms'])
+            return doc_data
+        except FileNotFoundError:
+            # File not found: return empty
+            return {}
+
+    def commit(self):
+        """
+        Persist current state to `self.filepath`.
+
+        Serialization is currently done in JSON. This is obviously not very
+        performant, but is good enough for now.
+        """
+        # TODO: THIS COULD BE CLEANER
+        doc_data = {
+            key: {
+                'slug': doc_data.slug,
+                'num_terms': doc_data.num_terms,
+            } for key, doc_data in self._doc_data.items()
+        }
+        index = [inverted_index.to_json() for inverted_index in self._index.values()]
+        serialized = {'doc_data': doc_data, 'index': index}
+        # Dump json
+        with open(self.filepath, 'w+', encoding='utf8') as outfile:
+            json.dump(serialized, outfile)
 
     def index_file(
             self,
             filepath: pathlib.Path,
             file_id: str,
+            encoding: str = None,
     ):
         """
         Indexes the file at the specified path, and registers it in the
         index under the provided `file_id`.
-
-        NOTE: No changes will be made to the persistent data until `commit()`
-        is called.
+        TODO: TEST WITH DIFFERENT ENCODINGS
         """
         doc_id = self._num_docs + 1
-        position = 0
-        # Tokenize the file
-        for token in self._tokenizer.tokenize_file(filepath):
+        num_tokens = 0
+        for token in self._tokenizer.tokenize_file(filepath, encoding=encoding):
             # If token not in index, create an InvertedList for it
             if token not in self._index:
                 self._index[token] = InvertedList(token)
             # Register this document as having an occurrence of the
             # token at the current word-position
-            self._index[token].add_posting(doc_id, position)
-            position += 1
+            self._index[token].add_posting(doc_id, num_tokens)
+            num_tokens += 1
         # Update number of terms in the index and add entry to doc_data
-        self._num_terms += position
-        self._doc_data[doc_id] = DocInfo(file_id, position)
+        self._num_terms += num_tokens
+        self._doc_data[doc_id] = DocInfo(file_id, num_tokens)
         self._num_docs += 1
-
-    def commit(self):
-        """Serializes data and writes out to `self.filepath`"""
-        # Create empty file if it doesn't exist already
-        if not self.filepath.exists():
-            open(self.filepath, 'a').close()
-        # Dump json
-        with open(self.filepath, 'w') as outfile:
-            json.dump(self.to_json(), outfile)
 
     def search(
             self,
@@ -123,7 +134,6 @@ class SearchEngine:
             score_func: str = 'ql',
     ) -> typing.List[FinalResult]:
         # TODO: MAKE SCORE_FUNC AN ENUM
-        # Process the query so it can be understood
         processed_query = q.process_query(query, self._tokenizer)
         results = self._run_query(processed_query, score_func)
         return self._format_results(results)
@@ -134,7 +144,7 @@ class SearchEngine:
             score_func: str,
     ) -> 'PriorityQueue[IntermediateResult]':
         results: PriorityQueue[IntermediateResult] = PriorityQueue()
-        # Retrieve the InvertedLists in the same order as the query terms
+        # Create dict mapping term to InvertedList for that term.
         inv_lists = {
             word: self._index[word] if word in self._index else InvertedList(word)
             for word in processed_query.terms
@@ -144,11 +154,8 @@ class SearchEngine:
             inv_list.reset_pointer()
 
         # Iterate over all documents that contain at least one of the terms
-        while True:
-            has_next, doc_id = self._find_next_doc(inv_lists)
-            if not has_next:
-                break
-
+        has_next, doc_id = self._find_next_doc(inv_lists)
+        while has_next:
             score = 0.0
             for term, inv_list in inv_lists.items():
                 if score_func == 'bm25':
@@ -175,6 +182,7 @@ class SearchEngine:
             for inv_list in inv_lists.values():
                 inv_list.move_to(doc_id + 1)
 
+            has_next, doc_id = self._find_next_doc(inv_lists)
         return results
 
     # inv_lists: dict mapping term->InvertedList
@@ -210,12 +218,3 @@ class SearchEngine:
         self._doc_data = {}
         self._num_docs = 0
         self._num_terms = 0
-
-    def to_json(self):
-        # Serialization currently done in JSON...
-        # This will be small enough that it should be fine (despite not being highly performant)
-        return {
-            'doc_data': {key: {'slug': doc_data.slug, 'num_terms': doc_data.num_terms} for key, doc_data in
-                         self._doc_data.items()},
-            'index': [inverted_index.to_json() for inverted_index in self._index.values()],
-        }
