@@ -31,48 +31,120 @@ def make_slug(sonnet_number: int) -> str:
 def test_query_1(sonnets_engine):
     res = sonnets_engine.search("Weary with toil, I haste me to my bed")
     assert res[0].slug == make_slug(27)
+    assert res[0].score == -21.520006033459808
 
 
 def test_query_2(sonnets_engine):
     res = sonnets_engine.search("Let me not to the marriage of true minds")
     assert res[0].slug == make_slug(116)
+    assert res[0].score == -20.5673062109939
 
 
 def test_query_3(sonnets_engine):
     res = sonnets_engine.search("My mistress' eyes are nothing like the sun")
     assert res[0].slug == make_slug(130)
+    assert res[0].score == -20.092107486147174
 
 
 def test_query_4(sonnets_engine):
     res = sonnets_engine.search("The expense of spirit in a waste of shame")
     assert res[0].slug == make_slug(129)
+    assert res[0].score == -19.777450503219303
 
 
 def test_query_5(sonnets_engine):
     res = sonnets_engine.search("When in the chronicle of wasted time")
     assert res[0].slug == make_slug(106)
+    assert res[0].score == -16.325642535181206
 
 
 def test_query_6(sonnets_engine):
     res = sonnets_engine.search("Shall I compare thee to a summer’s day?")
     assert res[0].slug == make_slug(18)
+    assert res[0].score == -20.504173217961355
 
 
 def test_query_7(sonnets_engine):
     res = sonnets_engine.search("So now I have confessed that he is thine")
     assert res[0].slug == make_slug(134)
+    assert res[0].score == -20.979012760089027
 
 
 def test_query_8(sonnets_engine):
     res = sonnets_engine.search("To me, fair friend, you never can be old")
     assert res[0].slug == make_slug(104)
+    assert res[0].score == -22.103154435395787
 
 
 def test_query_9(sonnets_engine):
     res = sonnets_engine.search("When in disgrace with fortune and men’s eyes")
     assert res[0].slug == make_slug(29)
+    assert res[0].score == -21.72004365822967
 
 
 def test_query_10(sonnets_engine):
     res = sonnets_engine.search("From you have I been absent in the spring")
     assert res[0].slug == make_slug(98)
+    assert res[0].score == -21.559573753181454
+
+
+def test_query_11(sonnets_engine):
+    res = sonnets_engine.search("Weary with toil, I haste me to my bed", score_func='bm25')
+    assert res[0].slug == make_slug(27)
+    assert res[0].score == 3.3942308383190047
+
+
+def test_query_12(sonnets_engine):
+    # TODO: BM25 GIVES US A BAD ANSWER
+    res = sonnets_engine.search("Let me not to the marriage of true minds", score_func='bm25')
+    assert res[0].slug == make_slug(36)
+    assert res[0].score == 0.7825224158987157
+
+
+def test_query_13(sonnets_engine):
+    res = sonnets_engine.search("My mistress' eyes are nothing like the sun", score_func='bm25')
+    assert res[0].slug == make_slug(130)
+    assert res[0].score == 5.757886923342326
+
+
+def test_query_14(sonnets_engine):
+    res = sonnets_engine.search("The expense of spirit in a waste of shame", score_func='bm25')
+    assert res[0].slug == make_slug(129)
+    assert res[0].score == 1.3046924580067916
+
+
+def test_query_15(sonnets_engine):
+    res = sonnets_engine.search("When in the chronicle of wasted time", score_func='bm25')
+    assert res[0].slug == make_slug(106)
+    assert res[0].score == 1.69059291600607
+
+
+def test_query_16(sonnets_engine):
+    res = sonnets_engine.search("Shall I compare thee to a summer’s day?", score_func='bm25')
+    assert res[0].slug == make_slug(18)
+    assert res[0].score == 2.2399816041141682
+
+
+def test_query_17(sonnets_engine):
+    res = sonnets_engine.search("So now I have confessed that he is thine", score_func='bm25')
+    assert res[0].slug == make_slug(134)
+    assert res[0].score == 3.0794881617749135
+
+
+def test_query_18(sonnets_engine):
+    res = sonnets_engine.search("To me, fair friend, you never can be old", score_func='bm25')
+    assert res[0].slug == make_slug(104)
+    assert res[0].score == 4.94198548680906
+
+
+def test_query_19(sonnets_engine):
+    # TODO: THIS GIVES US A PRETTY BAD ANSWER (BM25)
+    res = sonnets_engine.search("When in disgrace with fortune and men’s eyes", score_func='bm25')
+    assert res[0].slug == make_slug(32)  #make_slug(29)
+    assert res[0].score == 0.8685964709272731
+
+
+def test_query_20(sonnets_engine):
+    res = sonnets_engine.search("From you have I been absent in the spring", score_func='bm25')
+    assert res[0].slug == make_slug(98)
+    assert res[0].score == 2.9521473910601936
