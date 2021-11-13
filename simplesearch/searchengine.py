@@ -5,7 +5,8 @@ from queue import PriorityQueue
 from simplesearch.inverted_list import InvertedList
 import simplesearch.query as q
 import simplesearch.tokenizer as t
-from simplesearch.scoring import score_bm25, score_ql
+from simplesearch.scoring.scorer import Scorer, ScoreInfo
+from simplesearch.scoring.ql import QlScorer
 from simplesearch.helper import DocInfo, IntermediateResult, FinalResult
 # TODO: DISTINGUISH BETWEEN DOCID (USER PROVIDED) AND DOCNUM (SEQUENTIALLY GENERATED)
 
@@ -23,6 +24,8 @@ class SearchEngine:
     _num_docs: int
     _num_terms: int
     _tokenizer: t.Tokenizer
+    # Default QlSCorer
+    scorer: Scorer
 
     @property
     def filepath(self) -> pathlib.Path:
@@ -40,6 +43,7 @@ class SearchEngine:
             self,
             filepath: pathlib.Path,
             stopwords: typing.List[str] = None,
+            scorer: Scorer = None
     ):
         if isinstance(filepath, str):
             filepath = pathlib.Path(filepath)
@@ -51,6 +55,7 @@ class SearchEngine:
         self._num_docs = len(self._doc_data)
         self._num_terms = sum(inv_list.num_postings for inv_list in self._index.values())
         self._tokenizer = t.Tokenizer(stopwords=stopwords)
+        self.scorer = scorer if scorer else QlScorer()
 
     def _marshall_index(self) -> typing.Dict[str, InvertedList]:
         """Marshals inverted index from `filepath`."""
@@ -131,19 +136,10 @@ class SearchEngine:
     def search(
             self,
             query: str,
-            score_func: str = 'ql',
     ) -> typing.List[FinalResult]:
-        # TODO: MAKE SCORE_FUNC AN ENUM
-        processed_query = q.process_query(query, self._tokenizer)
-        results = self._run_query(processed_query, score_func)
-        return self._format_results(results)
-
-    def _run_query(
-            self,
-            processed_query: q.ProcessedQuery,
-            score_func: str,
-    ) -> 'PriorityQueue[IntermediateResult]':
         results: PriorityQueue[IntermediateResult] = PriorityQueue()
+        processed_query = q.process_query(query, self._tokenizer)
+
         # Create dict mapping term to InvertedList for that term.
         inv_lists = {
             word: self._index[word] if word in self._index else InvertedList(word)
@@ -158,24 +154,22 @@ class SearchEngine:
         while has_next:
             score = 0.0
             for term, inv_list in inv_lists.items():
-                if score_func == 'bm25':
-                    qf = processed_query.term_counts[term]
-                    f = inv_list.get_term_freq() if inv_list.get_curr_doc_id() == doc_id else 0
-                    n = inv_list._num_docs
-                    N = self._num_docs
-                    dl = self._doc_data[doc_id].num_terms
-                    avdl = self._num_terms / self._num_docs
-                    # print (qf, f, n, N, dl, avdl)
-                    score += score_bm25(qf, f, n, N, dl, avdl)
-                elif score_func == 'ql':
-                    fqd = inv_list.get_term_freq() if inv_list.get_curr_doc_id() == doc_id else 0
-                    dl = self._doc_data[doc_id].num_terms
-                    cq = inv_list.num_postings
-                    C = self._num_terms
-                    score += score_ql(fqd, dl, cq, C)
+                # Collect data required for scoring
+                info = ScoreInfo(
+                    qf=processed_query.term_counts[term],
+                    df=inv_list.get_term_freq() if inv_list.get_curr_doc_id() == doc_id else 0,
+                    cf=inv_list.num_postings,
+                    nd=inv_list.num_docs,
+                    nc=self._num_docs,
+                    dl=self._doc_data[doc_id].num_terms,
+                    dc=self.num_terms,
+                    avdl=self._num_terms / self._num_docs,
+                )
+                score += self.scorer.calc_score(info)
 
             # put result in list using negative score as priority
             # this way, higher score is prioritized
+            # TODO: THIS MIGHT NOT ALWAYS BE DESIRED! ADD PARAM TO SCORER()
             results.put(IntermediateResult(doc_id, -score))
 
             # make sure all lists are moved to the next doc_id
@@ -183,7 +177,7 @@ class SearchEngine:
                 inv_list.move_to(doc_id + 1)
 
             has_next, doc_id = self._find_next_doc(inv_lists)
-        return results
+        return self._format_results(results)
 
     # inv_lists: dict mapping term->InvertedList
     # searches the lists for the next doc_id with at least one of the terms
