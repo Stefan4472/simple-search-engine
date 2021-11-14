@@ -2,12 +2,12 @@ import json
 import pathlib
 import typing
 from queue import PriorityQueue
-from simplesearch.inverted_list import InvertedList
-import simplesearch.query as q
-import simplesearch.tokenizer as t
+from simplesearch.engine.inverted_list import InvertedList
+import simplesearch.engine.query as q
+import simplesearch.engine.tokenizer as t
 from simplesearch.scoring.scorer import Scorer, ScoreInfo
 from simplesearch.scoring.ql import QlScorer
-from simplesearch.helper import DocInfo, IntermediateResult, FinalResult
+from simplesearch.engine.helper import DocInfo, IntermediateResult, FinalResult
 # TODO: DISTINGUISH BETWEEN DOCID (USER PROVIDED) AND DOCNUM (SEQUENTIALLY GENERATED)
 
 
@@ -39,6 +39,8 @@ class SearchEngine:
     def num_terms(self) -> int:
         return self._num_terms
 
+    # TODO: `STOPPER` CLASS FOR STOPWORDS
+    # TODO: CONFIGURABLE STEMMER CLASS? CONFIGURABLE TOKENIZER CLASS?
     def __init__(
             self,
             filepath: pathlib.Path,
@@ -140,57 +142,40 @@ class SearchEngine:
         results: PriorityQueue[IntermediateResult] = PriorityQueue()
         processed_query = q.process_query(query, self._tokenizer)
 
-        # Create dict mapping term to InvertedList for that term.
-        inv_lists = {
-            word: self._index[word] if word in self._index else InvertedList(word)
-            for word in processed_query.terms
-        }
+        # Retrieve InvertedLists corresponding to query terms
+        inverted_lists = \
+            [self._index[term] for term in processed_query.terms if term in self._index]
+        # Reset InvertedList pointers
+        for inverted_list in inverted_lists:
+            inverted_list.reset_pointer()
 
-        for inv_list in inv_lists.values():
-            inv_list.reset_pointer()
-
-        # Iterate over all documents that contain at least one of the terms
-        has_next, doc_id = self._find_next_doc(inv_lists)
-        while has_next:
-            score = 0.0
-            for term, inv_list in inv_lists.items():
+        while True:
+            remaining = [ilist for ilist in inverted_lists if not ilist.is_finished()]
+            if not remaining:
+                break
+            # Get the next-smallest doc_id in the selected InvertedLists
+            next_doc_id = min([ilist.get_curr_doc_id() for ilist in remaining])
+            # Now group on `next_doc_id`
+            score_infos: typing.List[ScoreInfo] = []
+            score = 0
+            for ilist in inverted_lists:
                 # Collect data required for scoring
-                info = ScoreInfo(
-                    qf=processed_query.term_counts[term],
-                    df=inv_list.get_term_freq() if inv_list.get_curr_doc_id() == doc_id else 0,
-                    cf=inv_list.num_postings,
-                    nd=inv_list.num_docs,
+                score_info = ScoreInfo(
+                    qf=processed_query.term_counts[ilist.term],
+                    df=ilist.get_term_freq() if ilist.get_curr_doc_id() == next_doc_id else 0,
+                    cf=ilist.num_postings,
+                    nd=ilist.num_docs,
                     nc=self._num_docs,
-                    dl=self._doc_data[doc_id].num_terms,
+                    dl=self._doc_data[next_doc_id].num_terms,
                     dc=self.num_terms,
                     avdl=self._num_terms / self._num_docs,
                 )
-                score += self.scorer.calc_score(info)
-
-            # put result in list using negative score as priority
-            # this way, higher score is prioritized
-            # TODO: THIS MIGHT NOT ALWAYS BE DESIRED! ADD PARAM TO SCORER()
-            results.put(IntermediateResult(doc_id, -score))
-
-            # make sure all lists are moved to the next doc_id
-            for inv_list in inv_lists.values():
-                inv_list.move_to(doc_id + 1)
-
-            has_next, doc_id = self._find_next_doc(inv_lists)
+                score_infos.append(score_info)
+                score += self.scorer.calc_score(score_info)
+                ilist.move_to(next_doc_id + 1)
+            # TODO: THIS MIGHT NOT ALWAYS BE DESIRED! ADD PARAM TO SCORER() OR REQUIRE A `COMPARE` FUNCTION
+            results.put(IntermediateResult(next_doc_id, -score))
         return self._format_results(results)
-
-    # inv_lists: dict mapping term->InvertedList
-    # searches the lists for the next doc_id with at least one of the terms
-    # returns whether a term was found, and the doc_id
-    def _find_next_doc(
-            self,
-            inv_lists,
-    ) -> (bool, int):
-        in_progress = [list for list in inv_lists.values() if not list.is_finished()]
-        if not in_progress:
-            return False, -1
-        next_doc_id = min([list.get_curr_doc_id() for list in in_progress])
-        return True, next_doc_id
 
     # returns list of (slug, score), ordered decreasing
     def _format_results(

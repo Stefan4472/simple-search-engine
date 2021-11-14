@@ -1,6 +1,6 @@
 import pathlib
 import tempfile
-from simplesearch.searchengine import SearchEngine
+from simplesearch.engine.search_engine import SearchEngine
 
 
 def create_engine() -> SearchEngine:

@@ -1,6 +1,6 @@
 import pytest
 import pathlib
-from simplesearch.searchengine import SearchEngine
+from simplesearch.engine.search_engine import SearchEngine
 from simplesearch.test.util import create_engine
 from simplesearch.scoring.ql import QlScorer
 from simplesearch.scoring.bm25 import Bm25Scorer

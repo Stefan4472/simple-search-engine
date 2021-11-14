@@ -1,5 +1,5 @@
 import typing
-from simplesearch.posting_list import PostingList
+from simplesearch.engine.posting_list import PostingList
 
 
 class InvertedList:
@@ -8,12 +8,11 @@ class InvertedList:
             term: str,
             posting_lists: typing.List[PostingList] = None,
     ):
+        # TODO: INVERTEDLISTS MUST REMAIN SORTED. THIS IS A KEY TO EFFICIENT OPERATIONS. LOOK INTO USING BYSECT()
         # NOTE: ONLY ITERATES FORWARD (for now). Call `reset()` between usages.
         self.term = term
         # list of PostingLists RENAME TO SOMETHING ELSE
         self.posting_lists = posting_lists if posting_lists else []
-        # print(posting_lists, self.posting_lists)
-        # TODO: REDUNDANCY
         self.num_docs = len(self.posting_lists)
         self.num_postings = sum([len(posting_list.postings) for posting_list in self.posting_lists])
         self.curr_index = 0

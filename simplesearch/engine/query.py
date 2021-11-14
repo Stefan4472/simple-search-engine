@@ -1,6 +1,6 @@
 import dataclasses as dc
 import typing
-from simplesearch.tokenizer import Tokenizer
+from simplesearch.engine.tokenizer import Tokenizer
 
 
 @dc.dataclass

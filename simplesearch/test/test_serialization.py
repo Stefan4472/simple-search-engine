@@ -1,9 +1,9 @@
-from simplesearch.searchengine import SearchEngine
+from simplesearch.engine.search_engine import SearchEngine
 from simplesearch.test.test_sonnets import sonnets_engine
-# TODO: WHAT'S A BETTER WAY TO TEST THIS?
 
 
 def test_serialize(sonnets_engine):
+    # TODO: WHAT'S A BETTER WAY TO TEST THIS?
     sonnets_engine.commit()
     marshalled_engine = SearchEngine(sonnets_engine.filepath)
 

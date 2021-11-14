@@ -2,7 +2,8 @@ import typing
 
 
 class PostingList:
-    """Stores the positions of "postings" of some term for a specific doc_id.
+    """
+    Stores the positions of "postings" of some term for a specific doc_id.
 
     In practice this is used by the InvertedList to group all occurrences
     of a term for a specific file.

@@ -1,6 +1,6 @@
 import typing
 import pathlib
-import simplesearch.stemmer as stemmer
+import simplesearch.engine.stemmer as stemmer
 
 
 class Tokenizer:
@@ -14,7 +14,7 @@ class Tokenizer:
     that will yield tokens one at a time, in order. Tokens will be stopped
     according to `stopwords` and stemmed via Porter Stemming.
 
-    TODO: MAKE STEMMING CONFIGURABLE/USER-IMPLEMENTABLE
+    TODO: MAKE STEMMING CONFIGURABLE/USER-IMPLEMENTABLE.
     TODO: TEST THAT ABBREVIATIONS CAN STILL BE FOUND CORRECTLY
     """
     def __init__(
