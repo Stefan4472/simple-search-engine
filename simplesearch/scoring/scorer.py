@@ -1,14 +1,16 @@
 import abc
+import typing
 import dataclasses as dc
 
 
 @dc.dataclass
-class ScoreInfo:
+class TermScoreInfo:
     """
-    Container for data used to calculate a score.
-
+    Data used to calculate a score for a single term of a query.
     TODO: IMPROVE VARIABLE NAMES
     """
+    # The actual term being scored
+    term: str
     # Frequency of the term in the query
     qf: int
     # Frequency of the term in the document
@@ -27,14 +29,31 @@ class ScoreInfo:
     avdl: float
 
 
+@dc.dataclass
+class DocScoreInfo:
+    """Data used to calculate the score of a document."""
+    terms: typing.List[TermScoreInfo]
+
+
 class Scorer(abc.ABC):
     """
-    Base class used to implement a scorer.
-    Scores a single document for a single term.
+    Base class used to implement a scorer that scores documents.
 
     A `Scorer` implementation must implement the `calc_score()` function.
-    TODO: MODIFY TO PROVIDE ALL INFOS AND RETURN THE SCORE FOR THE WHOLE DOCUMENT, NOT JUST FOR THE TERM.
     """
     @abc.abstractmethod
-    def calc_score(self, info: ScoreInfo) -> float:
+    def calc_score(self, info: DocScoreInfo) -> float:
+        """Calculate and return score for a `DocScoreInfo` instance."""
+        pass
+
+    @abc.abstractmethod
+    def to_sortable(self, score: float) -> float:
+        """
+        Transform a score calculated by this Scorer into a value
+        that can be sorted numerically from high to low (higher score =
+        better).
+
+        For example, if the implementation calculates negative scores,
+        the `to_sortable()` method should provide the absolute value.
+        """
         pass

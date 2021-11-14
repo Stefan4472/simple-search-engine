@@ -1,14 +1,21 @@
 import json
 import pathlib
 import typing
+import dataclasses as dc
 from queue import PriorityQueue
 from simplesearch.engine.inverted_list import InvertedList
 import simplesearch.engine.query as q
 import simplesearch.engine.tokenizer as t
-from simplesearch.scoring.scorer import Scorer, ScoreInfo
+from simplesearch.scoring.scorer import Scorer, TermScoreInfo, DocScoreInfo
 from simplesearch.scoring.ql import QlScorer
-from simplesearch.engine.helper import DocInfo, IntermediateResult, FinalResult
+from simplesearch.engine._helper import DocInfo, IntermediateResult
 # TODO: DISTINGUISH BETWEEN DOCID (USER PROVIDED) AND DOCNUM (SEQUENTIALLY GENERATED)
+
+
+@dc.dataclass
+class SearchResult:
+    slug: str
+    score: float
 
 
 class SearchEngine:
@@ -138,7 +145,7 @@ class SearchEngine:
     def search(
             self,
             query: str,
-    ) -> typing.List[FinalResult]:
+    ) -> typing.List[SearchResult]:
         results: PriorityQueue[IntermediateResult] = PriorityQueue()
         processed_query = q.process_query(query, self._tokenizer)
 
@@ -149,6 +156,7 @@ class SearchEngine:
         for inverted_list in inverted_lists:
             inverted_list.reset_pointer()
 
+        # Iterate over documents that contain at least one of the searched-for terms
         while True:
             remaining = [ilist for ilist in inverted_lists if not ilist.is_finished()]
             if not remaining:
@@ -156,11 +164,11 @@ class SearchEngine:
             # Get the next-smallest doc_id in the selected InvertedLists
             next_doc_id = min([ilist.get_curr_doc_id() for ilist in remaining])
             # Now group on `next_doc_id`
-            score_infos: typing.List[ScoreInfo] = []
-            score = 0
+            score_infos: typing.List[TermScoreInfo] = []
             for ilist in inverted_lists:
                 # Collect data required for scoring
-                score_info = ScoreInfo(
+                score_infos.append(TermScoreInfo(
+                    ilist.term,
                     qf=processed_query.term_counts[ilist.term],
                     df=ilist.get_term_freq() if ilist.get_curr_doc_id() == next_doc_id else 0,
                     cf=ilist.num_postings,
@@ -169,30 +177,32 @@ class SearchEngine:
                     dl=self._doc_data[next_doc_id].num_terms,
                     dc=self.num_terms,
                     avdl=self._num_terms / self._num_docs,
-                )
-                score_infos.append(score_info)
-                score += self.scorer.calc_score(score_info)
+                ))
                 ilist.move_to(next_doc_id + 1)
-            # TODO: THIS MIGHT NOT ALWAYS BE DESIRED! ADD PARAM TO SCORER() OR REQUIRE A `COMPARE` FUNCTION
-            results.put(IntermediateResult(next_doc_id, -score))
+            # Calculate score and insert into `results`
+            score = self.scorer.calc_score(DocScoreInfo(score_infos))
+            results.put(IntermediateResult(next_doc_id, score, self.scorer.to_sortable(score)))
         return self._format_results(results)
 
-    # returns list of (slug, score), ordered decreasing
     def _format_results(
             self,
             results: 'PriorityQueue[IntermediateResult]',
-    ):
-        formatted_results = []
+    ) -> typing.List[SearchResult]:
+        """
+        Given a PriorityQueue of `IntermediateResult`, create and return
+        list of `FinalResult` (which are user-processable).
+        """
+        formatted_results: typing.List[SearchResult] = []
         while not results.empty():
             next_result = results.get()
-            formatted_results.append(FinalResult(
+            formatted_results.append(SearchResult(
                 self._doc_data[next_result.doc_id].slug,
-                -next_result.score,
+                next_result.score,
             ))
         return formatted_results
 
-    # DANGER
     def clear_all_data(self):
+        """Reset the search engine. Danger!"""
         self._index = {}
         self._doc_data = {}
         self._num_docs = 0

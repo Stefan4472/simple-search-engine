@@ -7,15 +7,10 @@ class IntermediateResult:
     """Stores the score that a specified `doc_id` received."""
     doc_id: int
     score: float
+    sortable_score: float
 
-    def __lt__(self, other):
-        return self.score < other.score
-
-
-@dc.dataclass
-class FinalResult:
-    slug: str
-    score: float
+    def __lt__(self, other: 'IntermediateResult'):
+        return self.sortable_score < other.sortable_score
 
 
 @dc.dataclass
