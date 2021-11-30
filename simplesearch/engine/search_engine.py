@@ -5,11 +5,15 @@ import dataclasses as dc
 from queue import PriorityQueue
 from simplesearch.engine.inverted_list import InvertedList
 import simplesearch.engine.query as q
-import simplesearch.engine.tokenizer as t
+# import simplesearch.engine.tokenizer as t
 from simplesearch.engine.stopper import Stopper
 from simplesearch.scoring.scorer import Scorer, TermScoreInfo, DocScoreInfo
 from simplesearch.scoring.ql import QlScorer
 from simplesearch.engine._helper import DocInfo, IntermediateResult
+from simplesearch.stemming.stemmer import Stemmer
+from simplesearch.stemming.porter_stemmer import PorterStemmer
+from simplesearch.tokenizing.tokenizer import Tokenizer
+from simplesearch.tokenizing.alphanumeric_tokenizer import AlphaNumericTokenizer
 # TODO: DISTINGUISH BETWEEN DOCID (USER PROVIDED) AND DOCNUM (SEQUENTIALLY GENERATED)
 
 
@@ -31,11 +35,14 @@ class SearchEngine:
     _doc_data: typing.Dict[int, DocInfo]
     _num_docs: int
     _num_terms: int
-    _tokenizer: t.Tokenizer
-    # Stopper used to stop (i.e. disregard) certain tokens
-    stopper: Stopper
-    # Scorer used to score documents. Default to `QlSCorer`
-    scorer: Scorer
+    # Default to `AlphaNumericTokenizer`
+    _tokenizer: Tokenizer
+    # Default to None
+    _stopper: Stopper
+    # Default to `PorterStemmer`
+    _stemmer: Stemmer
+    # Default to `QlSCorer`
+    _scorer: Scorer
 
     @property
     def filepath(self) -> pathlib.Path:
@@ -49,12 +56,12 @@ class SearchEngine:
     def num_terms(self) -> int:
         return self._num_terms
 
-    # TODO: `STOPPER` CLASS FOR STOPWORDS
-    # TODO: CONFIGURABLE STEMMER CLASS? CONFIGURABLE TOKENIZER CLASS?
     def __init__(
             self,
             filepath: pathlib.Path,
+            tokenizer: Tokenizer = None,
             stopper: Stopper = None,
+            stemmer: Stemmer = None,
             scorer: Scorer = None
     ):
         if isinstance(filepath, str):
@@ -66,9 +73,10 @@ class SearchEngine:
         self._doc_data = self._marshall_doc_data()
         self._num_docs = len(self._doc_data)
         self._num_terms = sum(inv_list.num_postings for inv_list in self._index.values())
+        self._tokenizer = tokenizer if tokenizer else AlphaNumericTokenizer()
         self._stopper = stopper
-        self._tokenizer = t.Tokenizer()
-        self.scorer = scorer if scorer else QlScorer()
+        self._stemmer = stemmer if stemmer else PorterStemmer()
+        self._scorer = scorer if scorer else QlScorer()
 
     def _marshall_index(self) -> typing.Dict[str, InvertedList]:
         """Marshals inverted index from `filepath`."""
@@ -142,9 +150,7 @@ class SearchEngine:
         """Indexes the given string, storing it under the specified `file_id`."""
         doc_id = self._num_docs + 1
         num_tokens = 0
-        for token in self._tokenizer.tokenize_string(string):
-            if self._stopper and self._stopper.is_stopword(token):
-                continue
+        for token in self._process_text(string):
             # If token not in index, create an InvertedList for it
             if token not in self._index:
                 self._index[token] = InvertedList(token)
@@ -162,7 +168,7 @@ class SearchEngine:
             query: str,
     ) -> typing.List[SearchResult]:
         results: PriorityQueue[IntermediateResult] = PriorityQueue()
-        processed_query = q.process_query(query, self._tokenizer)
+        processed_query = self._process_query(query)
 
         # Retrieve InvertedLists corresponding to query terms
         inverted_lists = \
@@ -195,9 +201,25 @@ class SearchEngine:
                 ))
                 ilist.move_to(next_doc_id + 1)
             # Calculate score and insert into `results`
-            score = self.scorer.calc_score(DocScoreInfo(score_infos))
-            results.put(IntermediateResult(next_doc_id, score, self.scorer.to_sortable(score)))
+            score = self._scorer.calc_score(DocScoreInfo(score_infos))
+            results.put(IntermediateResult(next_doc_id, score, self._scorer.to_sortable(score)))
         return self._format_results(results)
+
+    def _process_text(self, text: str) -> typing.Generator[str, None, None]:
+        """A generator that tokenizes, stops, and stems the provided `text`"""
+        for token in self._tokenizer.tokenize_string(text):
+            if self._stopper and self._stopper.is_stopword(token):
+                continue
+            yield self._stemmer.get_stem(token)
+
+    def _process_query(self, query: str) -> q.ProcessedQuery:
+        term_counts = {}
+        for word in self._process_text(query):
+            if word in term_counts:
+                term_counts[word] += 1
+            else:
+                term_counts[word] = 1
+        return q.ProcessedQuery(query, list(term_counts.keys()), term_counts)
 
     def _format_results(
             self,
