@@ -128,6 +128,10 @@ class SearchEngine:
         with open(self.filepath, 'w+', encoding='utf8') as outfile:
             json.dump(serialized, outfile)
 
+    def has_doc(self, file_id: str) -> bool:
+        """Return whether a document has already been indexed under the given `file_id`."""
+        return file_id in self._doc_data
+
     def index_file(
             self,
             filepath: pathlib.Path,
