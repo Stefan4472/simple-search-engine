@@ -1,6 +1,6 @@
 import typing
 import pathlib
-import simplesearch.engine.stemmer as stemmer
+from simplesearch.stemming.porter_stemmer import PorterStemmer
 
 
 class Tokenizer:
@@ -14,13 +14,16 @@ class Tokenizer:
     that will yield tokens one at a time, in order. Tokens will be stopped
     according to `stopwords` and stemmed via Porter Stemming.
     """
+    def __init__(self):
+        self._stemmer = PorterStemmer()
+
     def tokenize_string(
             self,
             string: str,
     ) -> typing.Generator[str, None, None]:
         """Return a generator that yields tokens from `string`."""
         for token in self._parse_tokens(string):
-            yield stemmer.get_porter_stem(token)
+            yield self._stemmer.get_stem(token)
 
     @staticmethod
     def _parse_tokens(string: str) -> typing.Generator[str, None, None]:
