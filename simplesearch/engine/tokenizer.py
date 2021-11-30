@@ -23,16 +23,6 @@ class Tokenizer:
     ):
         self.stopwords = set(stopwords) if stopwords else set()
 
-    def tokenize_file(
-            self,
-            filepath: pathlib.Path,
-            encoding: str = None,
-    ) -> typing.Generator[str, None, None]:
-        """Return a generator that yields tokens from `filepath`."""
-        with open(filepath, encoding=encoding) as f:
-            text = f.read()
-        return self.tokenize_string(text)
-
     def tokenize_string(
             self,
             string: str,

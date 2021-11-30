@@ -123,13 +123,22 @@ class SearchEngine:
             encoding: str = None,
     ):
         """
-        Indexes the file at the specified path, and registers it in the
+        Reads the file at the specified path and registers it in the
         index under the provided `file_id`.
-        TODO: TEST WITH DIFFERENT ENCODINGS
+        TODO: TEST WITH DIFFERENT ENCODINGS + ERROR HANDLING
         """
+        with open(filepath, encoding=encoding) as f:
+            self.index_string(f.read(), file_id)
+
+    def index_string(
+            self,
+            string: str,
+            file_id: str,
+    ):
+        """Indexes the given string, storing it under the specified `file_id`."""
         doc_id = self._num_docs + 1
         num_tokens = 0
-        for token in self._tokenizer.tokenize_file(filepath, encoding=encoding):
+        for token in self._tokenizer.tokenize_string(string):
             # If token not in index, create an InvertedList for it
             if token not in self._index:
                 self._index[token] = InvertedList(token)
