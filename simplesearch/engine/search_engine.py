@@ -13,7 +13,7 @@ from simplesearch.engine._helper import DocInfo, IntermediateResult
 from simplesearch.stemming.stemmer import Stemmer
 from simplesearch.stemming.porter_stemmer import PorterStemmer
 from simplesearch.tokenizing.tokenizer import Tokenizer
-from simplesearch.tokenizing.alphanumeric_tokenizer import AlphaNumericTokenizer
+from simplesearch.tokenizing.alphanumeric_tokenizer import AlphanumericTokenizer
 # TODO: DISTINGUISH BETWEEN DOCID (USER PROVIDED) AND DOCNUM (SEQUENTIALLY GENERATED)
 
 
@@ -73,7 +73,7 @@ class SearchEngine:
         self._doc_data = self._marshall_doc_data()
         self._num_docs = len(self._doc_data)
         self._num_terms = sum(inv_list.num_postings for inv_list in self._index.values())
-        self._tokenizer = tokenizer if tokenizer else AlphaNumericTokenizer()
+        self._tokenizer = tokenizer if tokenizer else AlphanumericTokenizer()
         self._stopper = stopper
         self._stemmer = stemmer if stemmer else PorterStemmer()
         self._scorer = scorer if scorer else QlScorer()

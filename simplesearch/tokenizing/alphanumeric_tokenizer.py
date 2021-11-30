@@ -2,10 +2,20 @@ import typing
 from simplesearch.tokenizing.tokenizer import Tokenizer
 
 
-class AlphaNumericTokenizer(Tokenizer):
-    """A simple tokenizer that splits on non-alphanumeric characters."""
+class AlphanumericTokenizer(Tokenizer):
+    """
+    A simple tokenizer that splits on non-alphanumeric characters.
+
+    Can optionally be configured to return lowercased-tokens via
+    the `make_lower` argument.
+
+    TODO: RESEARCH WHETHER LOWERCASING IS ACTUALLY EFFECTIVE.
+      SEE: https://nlp.stanford.edu/IR-book/html/htmledition/capitalizationcase-folding-1.html
+    """
+    def __init__(self, lowercase: bool = False):
+        self._make_lower = lowercase
+
     def tokenize_string(self, string: str) -> typing.Generator[str, None, None]:
-        """Return a generator that yields tokens from `string`."""
         in_token = False
         token_start = None
         for i, char in enumerate(string):
@@ -17,14 +27,10 @@ class AlphaNumericTokenizer(Tokenizer):
             elif in_token and not is_tokenizable:
                 # End of current token
                 in_token = False
-                yield string[token_start:i]
+                yield string[token_start:i].lower() if self._make_lower else string[token_start:i]
         # Get potential final token
         if in_token:
-            yield string[token_start:len(string)]
-
-    @staticmethod
-    def _parse_tokens(string: str) -> typing.Generator[str, None, None]:
-        """Parses and yields raw tokens from the given string."""
+            yield string[token_start:len(string)].lower() if self._make_lower else string[token_start:len(string)]
 
     @staticmethod
     def _is_tokenizable(char: str) -> bool:

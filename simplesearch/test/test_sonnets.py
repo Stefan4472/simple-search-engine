@@ -4,6 +4,7 @@ from simplesearch.engine.search_engine import SearchEngine
 from simplesearch.test.util import create_engine
 from simplesearch.scoring.ql import QlScorer
 from simplesearch.scoring.bm25 import Bm25Scorer
+from simplesearch.tokenizing.alphanumeric_tokenizer import AlphanumericTokenizer
 """
 Very simple test cases for the sonnets.
 
@@ -31,7 +32,9 @@ def make_slug(sonnet_number: int) -> str:
     return 'SONNET-{}'.format(sonnet_number)
 
 
+# Start QL tests
 def test_query_1(sonnets_engine):
+    sonnets_engine._tokenizer = AlphanumericTokenizer()
     sonnets_engine._scorer = QlScorer()
     res = sonnets_engine.search("Weary with toil, I haste me to my bed")
     assert res[0].slug == make_slug(27)
@@ -39,6 +42,7 @@ def test_query_1(sonnets_engine):
 
 
 def test_query_2(sonnets_engine):
+    sonnets_engine._tokenizer = AlphanumericTokenizer()
     sonnets_engine._scorer = QlScorer()
     res = sonnets_engine.search("Let me not to the marriage of true minds")
     assert res[0].slug == make_slug(116)
@@ -46,6 +50,7 @@ def test_query_2(sonnets_engine):
 
 
 def test_query_3(sonnets_engine):
+    sonnets_engine._tokenizer = AlphanumericTokenizer()
     sonnets_engine._scorer = QlScorer()
     res = sonnets_engine.search("My mistress' eyes are nothing like the sun")
     assert res[0].slug == make_slug(130)
@@ -53,6 +58,7 @@ def test_query_3(sonnets_engine):
 
 
 def test_query_4(sonnets_engine):
+    sonnets_engine._tokenizer = AlphanumericTokenizer()
     sonnets_engine._scorer = QlScorer()
     res = sonnets_engine.search("The expense of spirit in a waste of shame")
     assert res[0].slug == make_slug(129)
@@ -60,6 +66,7 @@ def test_query_4(sonnets_engine):
 
 
 def test_query_5(sonnets_engine):
+    sonnets_engine._tokenizer = AlphanumericTokenizer()
     sonnets_engine._scorer = QlScorer()
     res = sonnets_engine.search("When in the chronicle of wasted time")
     assert res[0].slug == make_slug(106)
@@ -67,6 +74,7 @@ def test_query_5(sonnets_engine):
 
 
 def test_query_6(sonnets_engine):
+    sonnets_engine._tokenizer = AlphanumericTokenizer()
     sonnets_engine._scorer = QlScorer()
     res = sonnets_engine.search("Shall I compare thee to a summer’s day?")
     assert res[0].slug == make_slug(18)
@@ -74,6 +82,7 @@ def test_query_6(sonnets_engine):
 
 
 def test_query_7(sonnets_engine):
+    sonnets_engine._tokenizer = AlphanumericTokenizer()
     sonnets_engine._scorer = QlScorer()
     res = sonnets_engine.search("So now I have confessed that he is thine")
     assert res[0].slug == make_slug(134)
@@ -81,6 +90,7 @@ def test_query_7(sonnets_engine):
 
 
 def test_query_8(sonnets_engine):
+    sonnets_engine._tokenizer = AlphanumericTokenizer()
     sonnets_engine._scorer = QlScorer()
     res = sonnets_engine.search("To me, fair friend, you never can be old")
     assert res[0].slug == make_slug(104)
@@ -88,6 +98,7 @@ def test_query_8(sonnets_engine):
 
 
 def test_query_9(sonnets_engine):
+    sonnets_engine._tokenizer = AlphanumericTokenizer()
     sonnets_engine._scorer = QlScorer()
     res = sonnets_engine.search("When in disgrace with fortune and men’s eyes")
     assert res[0].slug == make_slug(29)
@@ -95,13 +106,16 @@ def test_query_9(sonnets_engine):
 
 
 def test_query_10(sonnets_engine):
+    sonnets_engine._tokenizer = AlphanumericTokenizer()
     sonnets_engine._scorer = QlScorer()
     res = sonnets_engine.search("From you have I been absent in the spring")
     assert res[0].slug == make_slug(98)
     assert res[0].score == -21.559573753181454
 
 
+# Start BM25 Tests
 def test_query_11(sonnets_engine):
+    sonnets_engine._tokenizer = AlphanumericTokenizer()
     sonnets_engine._scorer = Bm25Scorer()
     res = sonnets_engine.search("Weary with toil, I haste me to my bed")
     assert res[0].slug == make_slug(27)
@@ -110,6 +124,7 @@ def test_query_11(sonnets_engine):
 
 def test_query_12(sonnets_engine):
     # TODO: BM25 GIVES US A BAD ANSWER
+    sonnets_engine._tokenizer = AlphanumericTokenizer()
     sonnets_engine._scorer = Bm25Scorer()
     res = sonnets_engine.search("Let me not to the marriage of true minds")
     assert res[0].slug == make_slug(36)
@@ -117,6 +132,7 @@ def test_query_12(sonnets_engine):
 
 
 def test_query_13(sonnets_engine):
+    sonnets_engine._tokenizer = AlphanumericTokenizer()
     sonnets_engine._scorer = Bm25Scorer()
     res = sonnets_engine.search("My mistress' eyes are nothing like the sun")
     assert res[0].slug == make_slug(130)
@@ -124,6 +140,7 @@ def test_query_13(sonnets_engine):
 
 
 def test_query_14(sonnets_engine):
+    sonnets_engine._tokenizer = AlphanumericTokenizer()
     sonnets_engine._scorer = Bm25Scorer()
     res = sonnets_engine.search("The expense of spirit in a waste of shame")
     assert res[0].slug == make_slug(129)
@@ -131,6 +148,7 @@ def test_query_14(sonnets_engine):
 
 
 def test_query_15(sonnets_engine):
+    sonnets_engine._tokenizer = AlphanumericTokenizer()
     sonnets_engine._scorer = Bm25Scorer()
     res = sonnets_engine.search("When in the chronicle of wasted time")
     assert res[0].slug == make_slug(106)
@@ -138,6 +156,7 @@ def test_query_15(sonnets_engine):
 
 
 def test_query_16(sonnets_engine):
+    sonnets_engine._tokenizer = AlphanumericTokenizer()
     sonnets_engine._scorer = Bm25Scorer()
     res = sonnets_engine.search("Shall I compare thee to a summer’s day?")
     assert res[0].slug == make_slug(18)
@@ -145,6 +164,7 @@ def test_query_16(sonnets_engine):
 
 
 def test_query_17(sonnets_engine):
+    sonnets_engine._tokenizer = AlphanumericTokenizer()
     sonnets_engine._scorer = Bm25Scorer()
     res = sonnets_engine.search("So now I have confessed that he is thine")
     assert res[0].slug == make_slug(134)
@@ -152,6 +172,7 @@ def test_query_17(sonnets_engine):
 
 
 def test_query_18(sonnets_engine):
+    sonnets_engine._tokenizer = AlphanumericTokenizer()
     sonnets_engine._scorer = Bm25Scorer()
     res = sonnets_engine.search("To me, fair friend, you never can be old")
     assert res[0].slug == make_slug(104)
@@ -160,6 +181,7 @@ def test_query_18(sonnets_engine):
 
 def test_query_19(sonnets_engine):
     # TODO: THIS GIVES US A PRETTY BAD ANSWER (BM25)
+    sonnets_engine._tokenizer = AlphanumericTokenizer()
     sonnets_engine._scorer = Bm25Scorer()
     res = sonnets_engine.search("When in disgrace with fortune and men’s eyes")
     assert res[0].slug == make_slug(32)  #make_slug(29)
@@ -167,6 +189,7 @@ def test_query_19(sonnets_engine):
 
 
 def test_query_20(sonnets_engine):
+    sonnets_engine._tokenizer = AlphanumericTokenizer()
     sonnets_engine._scorer = Bm25Scorer()
     res = sonnets_engine.search("From you have I been absent in the spring")
     assert res[0].slug == make_slug(98)
