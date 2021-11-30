@@ -13,27 +13,14 @@ class Tokenizer:
     The `tokenize_file` and `tokenize_string` functions return a generator
     that will yield tokens one at a time, in order. Tokens will be stopped
     according to `stopwords` and stemmed via Porter Stemming.
-
-    TODO: MAKE STEMMING CONFIGURABLE/USER-IMPLEMENTABLE.
-    TODO: TEST THAT ABBREVIATIONS CAN STILL BE FOUND CORRECTLY
     """
-    def __init__(
-            self,
-            stopwords: typing.List[str] = None,
-    ):
-        self.stopwords = set(stopwords) if stopwords else set()
-
     def tokenize_string(
             self,
             string: str,
     ) -> typing.Generator[str, None, None]:
         """Return a generator that yields tokens from `string`."""
         for token in self._parse_tokens(string):
-            # Ignore stopwords
-            if token in self.stopwords:
-                continue
-            else:
-                yield stemmer.get_porter_stem(token)
+            yield stemmer.get_porter_stem(token)
 
     @staticmethod
     def _parse_tokens(string: str) -> typing.Generator[str, None, None]:

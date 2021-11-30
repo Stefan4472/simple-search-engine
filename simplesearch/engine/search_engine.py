@@ -6,6 +6,7 @@ from queue import PriorityQueue
 from simplesearch.engine.inverted_list import InvertedList
 import simplesearch.engine.query as q
 import simplesearch.engine.tokenizer as t
+from simplesearch.engine.stopper import Stopper
 from simplesearch.scoring.scorer import Scorer, TermScoreInfo, DocScoreInfo
 from simplesearch.scoring.ql import QlScorer
 from simplesearch.engine._helper import DocInfo, IntermediateResult
@@ -31,7 +32,9 @@ class SearchEngine:
     _num_docs: int
     _num_terms: int
     _tokenizer: t.Tokenizer
-    # Default QlSCorer
+    # Stopper used to stop (i.e. disregard) certain tokens
+    stopper: Stopper
+    # Scorer used to score documents. Default to `QlSCorer`
     scorer: Scorer
 
     @property
@@ -51,7 +54,7 @@ class SearchEngine:
     def __init__(
             self,
             filepath: pathlib.Path,
-            stopwords: typing.List[str] = None,
+            stopper: Stopper = None,
             scorer: Scorer = None
     ):
         if isinstance(filepath, str):
@@ -63,7 +66,8 @@ class SearchEngine:
         self._doc_data = self._marshall_doc_data()
         self._num_docs = len(self._doc_data)
         self._num_terms = sum(inv_list.num_postings for inv_list in self._index.values())
-        self._tokenizer = t.Tokenizer(stopwords=stopwords)
+        self._stopper = stopper
+        self._tokenizer = t.Tokenizer()
         self.scorer = scorer if scorer else QlScorer()
 
     def _marshall_index(self) -> typing.Dict[str, InvertedList]:
@@ -139,6 +143,8 @@ class SearchEngine:
         doc_id = self._num_docs + 1
         num_tokens = 0
         for token in self._tokenizer.tokenize_string(string):
+            if self._stopper and self._stopper.is_stopword(token):
+                continue
             # If token not in index, create an InvertedList for it
             if token not in self._index:
                 self._index[token] = InvertedList(token)

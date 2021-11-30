@@ -11,6 +11,7 @@ Note: these test cases have the problem that they are always the first line
 of the sonnet. This is okay for now but should be fixed when I put a little 
 more effort in!
 """
+# TODO: TEST THAT ABBREVIATIONS CAN STILL BE FOUND CORRECTLY
 
 
 # Use scope='session' to reuse without re-generating
