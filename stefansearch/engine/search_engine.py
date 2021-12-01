@@ -237,7 +237,6 @@ class SearchEngine:
                 self._doc_data[next_result.doc_id].slug,
                 next_result.score,
             ))
-        print(formatted_results)
         return formatted_results
 
     def clear_all_data(self):

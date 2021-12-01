@@ -1,10 +1,9 @@
 import pytest
-import pathlib
 from stefansearch.engine.search_engine import SearchEngine
-from stefansearch.test.util import create_engine
 from stefansearch.scoring.ql import QlScorer
 from stefansearch.scoring.bm25 import Bm25Scorer
 from stefansearch.tokenizing.alphanumeric_tokenizer import AlphanumericTokenizer
+from util import create_engine, TESTDATA_PATH
 """
 Very simple test cases for the sonnets.
 
@@ -21,7 +20,7 @@ def sonnets_engine() -> SearchEngine:
     """Creates a search engine with all of Shakespeare's sonnets indexed."""
     engine = create_engine()
     # Index all sonnets
-    sonnets_dir = pathlib.Path('TestData') / 'Sonnets'
+    sonnets_dir = TESTDATA_PATH / 'Sonnets'
     for sonnet_path in sonnets_dir.glob('*'):
         sonnet_num = int(sonnet_path.stem)
         engine.index_file(sonnet_path, make_slug(sonnet_num))
@@ -37,7 +36,6 @@ def test_query_1(sonnets_engine):
     sonnets_engine._tokenizer = AlphanumericTokenizer()
     sonnets_engine._scorer = QlScorer()
     res = sonnets_engine.search("Weary with toil, I haste me to my bed")
-    print(res)
     assert res[0].slug == make_slug(27)
     assert res[0].score == -21.520006033459808
 
