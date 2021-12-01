@@ -4,6 +4,8 @@ Shakespeare by William Shakespeare" ebook.
 
 https://www.gutenberg.org/ebooks/100
 Plain text: https://www.gutenberg.org/files/100/100-0.txt
+
+# TODO: ACTUALLY, THIS SCRIPT CAN BE SIMPLIFIED... DOESN'T NEED SO MANY ARGUMENTS. JUST A SIMPLE SCRIPT TO DOWNLOAD THE FILE AND CREATE THE TEST DIRECTORY STRUCTURE
 """
 import re
 import pathlib

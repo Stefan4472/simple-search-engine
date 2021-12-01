@@ -1,0 +1,4 @@
+click~=8.0.3
+dataclasses~=0.6
+pytest~=6.2.5
+setuptools~=57.0.0
