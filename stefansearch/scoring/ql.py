@@ -1,5 +1,5 @@
 import math
-from simplesearch.scoring.scorer import Scorer, DocScoreInfo, TermScoreInfo
+from stefansearch.scoring.scorer import Scorer, DocScoreInfo, TermScoreInfo
 
 
 class QlScorer(Scorer):

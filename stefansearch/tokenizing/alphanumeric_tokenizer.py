@@ -1,5 +1,5 @@
 import typing
-from simplesearch.tokenizing.tokenizer import Tokenizer
+from stefansearch.tokenizing.tokenizer import Tokenizer
 
 
 class AlphanumericTokenizer(Tokenizer):

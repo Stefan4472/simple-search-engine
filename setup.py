@@ -2,12 +2,14 @@ import setuptools
 
 
 setuptools.setup(
-    name='simplesearch',
-    version='0.1',
-    description='A simple search engine implemented in standard Python',
-    url='',
+    name='stefansearch',
+    version='1.0.0',
+    description='A simple search engine implementation',
+    url='https://github.com/Stefan4472/simple-search-engine',
+    license='GNU GPL v3.0',
     author='Stefan Kussmaul',
     author_email='',
-    packages=setuptools.find_packages(),
-    zip_safe=False,
+    platforms=['any'],
+    packages=[],
+    python_requires='>=3.6',
 )

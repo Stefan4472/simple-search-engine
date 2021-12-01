@@ -1,5 +1,5 @@
-from simplesearch.engine.search_engine import SearchEngine
-from simplesearch.test.test_sonnets import sonnets_engine
+from stefansearch.engine.search_engine import SearchEngine
+from stefansearch.test.test_sonnets import sonnets_engine
 
 
 def test_serialize(sonnets_engine):

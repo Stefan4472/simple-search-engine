@@ -1,4 +1,4 @@
-from simplesearch.stemming.stemmer import Stemmer
+from stefansearch.stemming.stemmer import Stemmer
 
 
 class PorterStemmer(Stemmer):

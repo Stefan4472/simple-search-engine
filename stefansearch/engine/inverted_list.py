@@ -1,5 +1,5 @@
 import typing
-from simplesearch.engine.posting_list import PostingList
+from stefansearch.engine.posting_list import PostingList
 
 
 class InvertedList:

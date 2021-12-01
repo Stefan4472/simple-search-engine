@@ -1,10 +1,10 @@
 import pytest
 import pathlib
-from simplesearch.engine.search_engine import SearchEngine
-from simplesearch.test.util import create_engine
-from simplesearch.scoring.ql import QlScorer
-from simplesearch.scoring.bm25 import Bm25Scorer
-from simplesearch.tokenizing.alphanumeric_tokenizer import AlphanumericTokenizer
+from stefansearch.engine.search_engine import SearchEngine
+from stefansearch.test.util import create_engine
+from stefansearch.scoring.ql import QlScorer
+from stefansearch.scoring.bm25 import Bm25Scorer
+from stefansearch.tokenizing.alphanumeric_tokenizer import AlphanumericTokenizer
 """
 Very simple test cases for the sonnets.
 
@@ -37,6 +37,7 @@ def test_query_1(sonnets_engine):
     sonnets_engine._tokenizer = AlphanumericTokenizer()
     sonnets_engine._scorer = QlScorer()
     res = sonnets_engine.search("Weary with toil, I haste me to my bed")
+    print(res)
     assert res[0].slug == make_slug(27)
     assert res[0].score == -21.520006033459808
 

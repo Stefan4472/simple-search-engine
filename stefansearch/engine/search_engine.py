@@ -3,17 +3,17 @@ import pathlib
 import typing
 import dataclasses as dc
 from queue import PriorityQueue
-from simplesearch.engine.inverted_list import InvertedList
-import simplesearch.engine.query as q
+from stefansearch.engine.inverted_list import InvertedList
+import stefansearch.engine.query as q
 # import simplesearch.engine.tokenizer as t
-from simplesearch.engine.stopper import Stopper
-from simplesearch.scoring.scorer import Scorer, TermScoreInfo, DocScoreInfo
-from simplesearch.scoring.ql import QlScorer
-from simplesearch.engine._helper import DocInfo, IntermediateResult
-from simplesearch.stemming.stemmer import Stemmer
-from simplesearch.stemming.porter_stemmer import PorterStemmer
-from simplesearch.tokenizing.tokenizer import Tokenizer
-from simplesearch.tokenizing.alphanumeric_tokenizer import AlphanumericTokenizer
+from stefansearch.engine.stopper import Stopper
+from stefansearch.scoring.scorer import Scorer, TermScoreInfo, DocScoreInfo
+from stefansearch.scoring.ql import QlScorer
+from stefansearch.engine._helper import DocInfo, IntermediateResult
+from stefansearch.stemming.stemmer import Stemmer
+from stefansearch.stemming.porter_stemmer import PorterStemmer
+from stefansearch.tokenizing.tokenizer import Tokenizer
+from stefansearch.tokenizing.alphanumeric_tokenizer import AlphanumericTokenizer
 # TODO: DISTINGUISH BETWEEN DOCID (USER PROVIDED) AND DOCNUM (SEQUENTIALLY GENERATED)
 
 
@@ -167,10 +167,7 @@ class SearchEngine:
         self._doc_data[doc_id] = DocInfo(file_id, num_tokens)
         self._num_docs += 1
 
-    def search(
-            self,
-            query: str,
-    ) -> typing.List[SearchResult]:
+    def search(self, query: str) -> typing.List[SearchResult]:
         results: PriorityQueue[IntermediateResult] = PriorityQueue()
         processed_query = self._process_query(query)
 
@@ -240,6 +237,7 @@ class SearchEngine:
                 self._doc_data[next_result.doc_id].slug,
                 next_result.score,
             ))
+        print(formatted_results)
         return formatted_results
 
     def clear_all_data(self):
