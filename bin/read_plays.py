@@ -65,38 +65,39 @@ class Play:
 
 
 def extract_play(title: str, text: str) -> Play:
-    # Problems: TWELFTH NIGHT,
-    r = re.compile(r'ACT ([IV]+)|SCENE ([IVX1-9]+)\.\s+|INDUCTION\.|PROLOGUE\.\n|CHORUS\.\n|EPILOGUE\.\n')
+    # We add the negative lookahead to "CHORUS" to avoid matching the character
+    # "CHORUS" who shows up in A Midsummer Night's Dream. The *character* CHORUS
+    # always has four spaces on the next line, while the CHORUS *scenes* don't.
+    # Match an optional period after "SCENE" because two scenes in King Richard
+    # are missing a trailing period.
+    r = re.compile(r'ACT ([IV]+)|SCENE ([IVX1-9]+)\.?\s+|INDUCTION\.|PROLOGUE\.\n|CHORUS\.\n^(?!    )|EPILOGUE\.\n')
     # Check for table of contents.
     # We can actually do this simple search because the only instances of
     # "Contents" are to begin a Table of Contents
     has_table_of_contents = (text.find('Contents') > -1)
     # Check for a prologue.
-    has_prologue = (text.find('PROLOGUE') > -1)
+    # Note: we have to distinguish with the character named "PROLOGUE"
+    # in A Midsummer Night's Dream. We do this by checking for the period.
+    has_prologue = (text.find('PROLOGUE.') > -1)
     is_special = (text.find('ACT') == -1)
     # If the play has a table of contents:
     # Skip to the second 'ACT 1', which is where the actual play text starts
     if has_table_of_contents and has_prologue:
-        text = text[text.find('PROLOGUE'):]
+        text = text[text.find('PROLOGUE.'):]
         # print('HAS PROLOGUE')
     elif has_table_of_contents and not has_prologue:
         text = text[text.find('ACT I\n') + 6:]
         text = text[text.find('ACT I'):]  # NOTE: USED TO BE 'ACT I\n', BUT THIS DIDN'T MATCH TWELFTH NIGHT
+    # Special case: there are no Acts or Scenes. We just take these as-is.
+    # If desired, this could be improved to parse each one differently.
+    # The "special" works are: A Lover's Complaint, The Passionate Pilgrim, The Phoenix and the Turtle, The Rape of Lucrece, and Venus and Adonis
     elif is_special:
-        print(f'{title} IS SPECIAL')
-        # TODO: need another look: Venus and Adonis, A Lover's Complaint, The Passionate Pilgrim, The Phoenix and the Turtle, The Rape of Lucrece
-        # This is good enough for A Lover's Complaint, The Phoenix and the Turtle
-        return Play(title, [Scene('', '', text[text.find(title)+len(title):])])
-    # print(text[:1700])
+        return Play(title, [Scene('', '', text[text.find(title)+len(title):].strip())])
+
     curr_act = ''
     scenes: typing.List[Scene] = []
     matches = list(re.finditer(r, text))
 
-    # TODO: Midsummer Night's Dream needs special handling because there is a character named "PROLOGUE"
-    if 'MIDSUMMER' in title:
-        print(title)
-        print('YO')
-        print(text[:1000])
     # Bit of a wacky loop because we need a look-ahead
     # TODO: CONVERT TO A LOOK-AHEAD LOOP (CLEANER)
     for i in range(len(matches) + 1):
@@ -146,9 +147,12 @@ if __name__ == '__main__':
     # Trim out the sonnets at the beginning and the license text at the end
     sonnets_start = text.find('THE SONNETS', text.find('THE SONNETS') + 11) + 11
     sonnets_end = text.find('THE END', sonnets_start)
-    text = text[sonnets_end+8:text.find('***END OF THE PROJECT GUTENBERG EBOOK')]
+    text = text[sonnets_end+8:text.find('*** END OF THE PROJECT GUTENBERG EBOOK')]
 
     for play_index in range(len(TITLES)):
+        # if play_index != 14:
+        #     continue
+
         # Find text indexes where the play starts and ends
         play_start = text.find(TITLES[play_index])
         play_end = text.find(TITLES[play_index + 1]) if play_index < len(TITLES) - 1 else len(text)
@@ -158,9 +162,16 @@ if __name__ == '__main__':
         import pathlib
         data_path = pathlib.Path('../test/TestData/Plays')
         data_path.mkdir(exist_ok=True)
-        play_path = data_path / TITLES[play_index].lower().replace('’', '').replace(' ', '-').replace(':', '').replace(',', '')
+        # "Regularize" the play name for creating a path
+        regularized_name = play.title.lower().replace('’', '').replace(' ', '-').replace(':', '').replace(',', '')
+        play_path = data_path / regularized_name
         play_path.mkdir(exist_ok=True)
         for scene in play.scenes:
-            scene_path = play_path / f'ACT-{scene.act}-SCENE-{scene.name}.txt'
+            if scene.act and scene.name:
+                scene_path = play_path / f'ACT-{scene.act}-SCENE-{scene.name}.txt'
+            elif scene.name:
+                scene_path = play_path / f'{scene.name}.txt'
+            else:
+                scene_path = play_path / f'{regularized_name}.txt'
             with open(scene_path, 'w+', encoding='utf-8') as out:
                 out.write(scene.text)
