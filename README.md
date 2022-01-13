@@ -27,5 +27,5 @@ python parse_shakespeare.py ../test/shakespeare-gutenberg.txt ../test/TestData
 Execute unit tests:
 ```
 # from project root
-python -m pytest 
+python -m pytest --benchmark-skip
 ```

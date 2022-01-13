@@ -20,7 +20,7 @@ def download_shakespeare(save_path: pathlib.Path):
     This program will create a file at SAVE_PATH if none exists, or overwrite
     an existing file at SAVE_PATH.
     """
-    click.echo(f'Downloading to {save_path.absolute()}...')
+    click.echo(f'Downloading to {save_path.resolve()}...')
     with urllib.request.urlopen(r'https://www.gutenberg.org/files/100/100-0.txt') as f:
         with open(save_path, 'wb+') as out:
             out.write(f.read())

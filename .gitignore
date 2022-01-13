@@ -1,4 +1,5 @@
-shakespeare-gutenberg.txt
+test/shakespeare-gutenberg.txt
+test/TestData
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
