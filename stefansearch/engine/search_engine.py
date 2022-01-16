@@ -31,8 +31,12 @@ class SearchEngine:
     """
     _filepath: pathlib.Path
     _stopwords: typing.List[str]
+    # Map term to corresponding InvertedList. This is the inverted index.
     _index: typing.Dict[str, InvertedList]
+    # Map doc_id to some information about the document
     _doc_data: typing.Dict[int, DocInfo]
+    # Map file_id to doc_id
+    _doc_id_from_file_id: typing.Dict[str, int]
     _num_docs: int
     _num_terms: int
     # Default to `AlphaNumericTokenizer`
@@ -50,7 +54,7 @@ class SearchEngine:
 
     @property
     def num_docs(self) -> int:
-        return self.num_docs
+        return self._num_docs
 
     @property
     def num_terms(self) -> int:
@@ -71,6 +75,8 @@ class SearchEngine:
         self._filepath = filepath
         self._index = self._marshall_index()
         self._doc_data = self._marshall_doc_data()
+        self._file_id_to_doc_id = \
+            {doc_data.slug: doc_id for doc_id, doc_data in self._doc_data.items()}
         self._num_docs = len(self._doc_data)
         self._num_terms = sum(inv_list.num_postings for inv_list in self._index.values())
         self._tokenizer = tokenizer if tokenizer else AlphanumericTokenizer()
@@ -152,6 +158,7 @@ class SearchEngine:
             file_id: str,
     ):
         """Indexes the given string, storing it under the specified `file_id`."""
+        # TODO: file_id should be the first argument
         doc_id = self._num_docs + 1
         num_tokens = 0
         for token in self._process_text(string):
@@ -165,7 +172,39 @@ class SearchEngine:
         # Update number of terms in the index and add entry to doc_data
         self._num_terms += num_tokens
         self._doc_data[doc_id] = DocInfo(file_id, num_tokens)
+        self._file_id_to_doc_id[file_id] = doc_id
         self._num_docs += 1
+
+    def remove_document(self, file_id: str):
+        """
+        Removes document with specified `file_id` from index.
+
+        This is a naive implementation.
+        """
+        # TODO: in general, search_engine, inverted_list, and posting_list need
+        #  some serious improvements
+        doc_id = self._file_id_to_doc_id[file_id]
+        if not self.has_doc(doc_id):
+            raise ValueError(f'No document with specified file_id "{file_id}"')
+        # Note: create list(keys) to allow deletion during iteration
+        for term in list(self._index.keys()):
+            inverted_list = self._index[term]
+            if inverted_list.has_document(doc_id):
+                inverted_list.move_to(doc_id)
+                posting_list = inverted_list.posting_lists[inverted_list.curr_index]
+                inverted_list.num_docs -= 1
+                inverted_list.num_postings -= len(posting_list.postings)
+                del inverted_list.posting_lists[inverted_list.curr_index]
+                if inverted_list.num_docs == 0:
+                    del self._index[term]
+                else:
+                    inverted_list.reset_pointer()
+                    self._index[term] = inverted_list
+                self._num_terms -= len(posting_list.postings)
+        # Remove document from index
+        del self._doc_data[doc_id]
+        self._num_docs -= 1
+
 
     def search(self, query: str) -> typing.List[SearchResult]:
         results: PriorityQueue[IntermediateResult] = PriorityQueue()

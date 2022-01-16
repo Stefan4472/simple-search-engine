@@ -9,6 +9,7 @@ class InvertedList:
             posting_lists: typing.List[PostingList] = None,
     ):
         # TODO: INVERTEDLISTS MUST REMAIN SORTED. THIS IS A KEY TO EFFICIENT OPERATIONS. LOOK INTO USING BYSECT()
+        # TODO: efficiency and other general improvements. Maintain a current pointer and use binary search to move to an arbitrary file
         # NOTE: ONLY ITERATES FORWARD (for now). Call `reset()` between usages.
         self.term = term
         # list of PostingLists RENAME TO SOMETHING ELSE
@@ -41,6 +42,12 @@ class InvertedList:
 
     def get_curr_doc_id(self) -> int:
         return self.posting_lists[self.curr_index].doc_id if self.curr_index < self.num_docs else None
+
+    def has_document(self, doc_id: int) -> bool:
+        self.reset_pointer()
+        found = self.move_to(doc_id)
+        self.reset_pointer()
+        return found
 
     # iterate forward through the list until reaching doc_id >= the given doc_id
     # returns whether the doc_id was found in the list

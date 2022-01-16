@@ -7,7 +7,7 @@ class PostingList:
 
     In practice this is used by the InvertedList to group all occurrences
     of a term for a specific file.
-    TODO: MAKE INTO DATACLASS
+    TODO: ~~MAKE INTO DATACLASS~~ Maintain sorted order via bisect()
     """
     def __init__(
             self,
