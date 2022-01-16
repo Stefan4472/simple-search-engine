@@ -134,15 +134,16 @@ class SearchEngine:
         with open(self.filepath, 'w+', encoding='utf8') as outfile:
             json.dump(serialized, outfile)
 
-    def has_doc(self, file_id: str) -> bool:
+    def has_document(self, file_id: str) -> bool:
         """Return whether a document has already been indexed under the given `file_id`."""
-        return file_id in self._doc_data
+        return file_id in self._file_id_to_doc_id
 
     def index_file(
             self,
             filepath: pathlib.Path,
             file_id: str,
             encoding: str = None,
+            allow_overwrite: bool = False,
     ):
         """
         Reads the file at the specified path and registers it in the
@@ -150,15 +151,23 @@ class SearchEngine:
         TODO: TEST WITH DIFFERENT ENCODINGS + ERROR HANDLING
         """
         with open(filepath, encoding=encoding) as f:
-            self.index_string(f.read(), file_id)
+            self.index_string(f.read(), file_id, allow_overwrite=allow_overwrite)
 
     def index_string(
             self,
             string: str,
             file_id: str,
+            allow_overwrite: bool = False,
     ):
         """Indexes the given string, storing it under the specified `file_id`."""
         # TODO: file_id should be the first argument
+        # Handle case where document with given file_id is already indexed
+        if self.has_document(file_id):
+            if allow_overwrite:
+                self.remove_document(file_id)
+            else:
+                raise ValueError('Document already indexed but allow_overwrite=False')
+
         doc_id = self._num_docs + 1
         num_tokens = 0
         for token in self._process_text(string):
@@ -183,9 +192,9 @@ class SearchEngine:
         """
         # TODO: in general, search_engine, inverted_list, and posting_list need
         #  some serious improvements
-        doc_id = self._file_id_to_doc_id[file_id]
-        if not self.has_doc(doc_id):
+        if not self.has_document(file_id):
             raise ValueError(f'No document with specified file_id "{file_id}"')
+        doc_id = self._file_id_to_doc_id[file_id]
         # Note: create list(keys) to allow deletion during iteration
         for term in list(self._index.keys()):
             inverted_list = self._index[term]
