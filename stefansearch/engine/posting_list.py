@@ -2,11 +2,12 @@ import typing
 
 
 class PostingList:
-    """Stores the positions of "postings" of some term for a specific doc_id.
+    """
+    Stores the positions of "postings" of some term for a specific doc_id.
 
     In practice this is used by the InvertedList to group all occurrences
     of a term for a specific file.
-    TODO: MAKE INTO DATACLASS
+    TODO: ~~MAKE INTO DATACLASS~~ Maintain sorted order via bisect()
     """
     def __init__(
             self,
